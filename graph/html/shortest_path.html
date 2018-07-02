@@ -1,0 +1,78 @@
+ <meta charset="utf-8">
+<script src = "./js/d3.min.js"></script>
+<script src = "./js/centrality.js"> </script>
+<script src = "./js/shortest_path.js"></script>
+<title>最短距离</title>
+<h1 align="center">最短距离</h1> 
+<p align= "center"></p>
+<body></body>
+<script>
+var explain = d3.select("p").text("当前最短路径起点ID为:"+start+",终点ID为:"+end+"。起点用“橙色”表示，终点用“绿色”表示，最短路径用“红色”表示。鼠标移动到点上可以显示点的具体信息。");
+var width = 1200;
+var height = 800;
+var svg = d3.select("body").append("svg").attr("width",width).attr("height",height);
+var color = d3.scale.category20();
+
+
+var force = d3.layout.force()
+      .nodes(nodes_centrality) //指定节点数组
+      .links(shortest_path) //指定连线数组
+      .size([width,height]) //指定作用域范围
+      .linkDistance(150) //指定连线长度
+      .charge([-15]); //相互之间的作用力
+      force.start(); 
+//添加连线 
+var svg_edges = svg.selectAll("line")
+     .data(shortest_path)
+     .enter()
+     .append("line")
+     .style("stroke","red")
+     .style("stroke-width",1);
+ 
+ var color = d3.scale.category20c();
+
+ //添加节点 
+ var svg_nodes = svg.selectAll("circle")
+     .data(nodes_centrality)
+     .enter()
+     .append("circle")
+     .attr("r",3)
+     .style("fill",function(d,i){if (nodes_centrality[i].name == start) return "orange";else if (nodes_centrality[i].name == end) return "green";else return "steelblue";})
+     .on("mouseover",function(d,i){
+        svg_texts.text(function(d,j)
+            {if (i == j) 
+                return "用户ID:"+i+";用户名:\""+nodes_centrality[i].user+"\";";
+            else 
+                return;
+            }); 
+     })
+     .call(force.drag);  //使得节点能够拖动
+
+ //添加描述节点的文字
+ var svg_texts = svg.selectAll("text")
+     .data(nodes_centrality)
+     .enter()
+     .append("text")
+     .style("fill", "black")
+     .attr("dx", 5)
+     .attr("dy", 4)
+     .attr("font-size",12);
+
+force.on("tick", function(){ //对于每一个时间间隔
+//更新连线坐标
+svg_edges.attr("x1",function(d){ return d.source.x; })
+        .attr("y1",function(d){ return d.source.y; })
+        .attr("x2",function(d){ return d.target.x; })
+        .attr("y2",function(d){ return d.target.y; });
+
+//更新节点坐标
+svg_nodes.attr("cx",function(d){ return d.x; })
+        .attr("cy",function(d){ return d.y; });
+
+//更新文字
+svg_texts.attr("x", function(d){ return d.x; })
+     .attr("y", function(d){ return d.y; });
+           
+ });
+
+</script>

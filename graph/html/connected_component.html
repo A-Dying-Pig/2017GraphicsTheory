@@ -1,0 +1,80 @@
+ <meta charset="utf-8">
+<script src = "./js/d3.min.js"></script>
+<script src = "./js/connected.js"></script>
+<script src = "./js/connected_links.js"></script>
+<title>连通分量</title>
+<h1 align="center">连通分量</h1> 
+<p align= "center"></p>
+<body></body>
+<script>
+var explain = d3.select("p").text("当前阈值是:"+range+"，连通支数为："+connected_component+"。相连的相同颜色的点代表同一连通支，鼠标移动到点上可以显示点的具体信息，图中只显示了部分边。");
+var width = 1200;
+var height = 800;
+var svg = d3.select("body").append("svg").attr("width",width).attr("height",height);
+var color = d3.scale.category20();
+var m_color = d3.scale.ordinal().domain([0,1,2,3,4,5,6,7]).range(["#FF0000","#8A8A8A","#EEEE00","#9AFF9A","#4876FF","#551A8B","#EE9A00","#40E0D0"]);
+
+var force = d3.layout.force()
+      .nodes(nodes) //指定节点数组
+      .links(connected_links) //指定连线数组
+      .size([width,height]) //指定作用域范围
+      .linkDistance(150) //指定连线长度
+      .charge([-20]); //相互之间的作用力
+      force.start(); 
+//添加连线 
+var svg_edges = svg.selectAll("line")
+     .data(connected_links)
+     .enter()
+     .append("line")
+     .style("stroke","#ccc")
+     .style("stroke-width",0.5);
+ 
+
+ //添加节点 
+ var svg_nodes = svg.selectAll("circle")
+     .data(nodes)
+     .enter()
+     .append("circle")
+     .attr("r",2)
+     .style("fill",function(d,i){
+         return m_color(nodes[i].group%8);
+     })
+     .on("mouseover",function(d,i){
+        svg_texts.text(function(d,j)
+            {if (i == j) 
+                return "用户ID:"+i+";用户名:\""+nodes[i].user+"\";连通支编号:"+nodes[i].group+";";
+            else 
+                return;
+            }); 
+     })
+     .call(force.drag);  //使得节点能够拖动
+
+ //添加描述节点的文字
+ var svg_texts = svg.selectAll("text")
+     .data(nodes)
+     .enter()
+     .append("text")
+     .style("fill", "black")
+     .attr("dx", 5)
+     .attr("dy", 4)
+     .attr("font-size",12)
+     ;
+
+force.on("tick", function(){ //对于每一个时间间隔
+//更新连线坐标
+svg_edges.attr("x1",function(d){ return d.source.x; })
+        .attr("y1",function(d){ return d.source.y; })
+        .attr("x2",function(d){ return d.target.x; })
+        .attr("y2",function(d){ return d.target.y; });
+
+//更新节点坐标
+svg_nodes.attr("cx",function(d){ return d.x; })
+        .attr("cy",function(d){ return d.y; });
+
+//更新文字
+svg_texts.attr("x", function(d){ return d.x; })
+    .attr("y", function(d){ return d.y; });
+           
+ });
+
+</script>
